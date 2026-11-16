@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Little Dream Room</title>
+<style>
+  :root { --ink:#554b4a; --rose:#d99ca6; --cream:#fffaf4; }
+  * { box-sizing:border-box }
+  body { margin:0; overflow:hidden; background:#f7eee8; color:var(--ink); font-family:Inter,system-ui,sans-serif }
+  #scene { position:fixed; inset:0 }
+  .panel { position:fixed; z-index:2; background:rgba(255,250,246,.88); border:1px solid rgba(255,255,255,.9); box-shadow:0 12px 35px #725b5b20; backdrop-filter:blur(12px); border-radius:18px }
+  header { top:18px; left:18px; padding:13px 17px }
+  h1 { font-size:17px; margin:0 0 3px; letter-spacing:.02em }
+  .sub { font-size:11px; opacity:.7 }
+  #controls { right:18px; top:18px; padding:12px; display:flex; gap:7px; flex-wrap:wrap; max-width:250px; justify-content:flex-end }
+  button { border:1px solid #e9cbd0; background:#fffaf8; color:#68565a; border-radius:999px; padding:8px 11px; cursor:pointer; font-size:11px }
+  button:hover, button.active { background:#f1dce0; border-color:#d9aab3 }
+  #hint { bottom:18px; left:50%; transform:translateX(-50%); padding:10px 15px; font-size:11px; white-space:nowrap }
+  #label { position:fixed; z-index:2; left:18px; bottom:18px; padding:10px 13px; font-size:11px; display:none }
+  @media(max-width:600px){ header{top:10px;left:10px} #controls{top:74px;right:10px;max-width:210px} #hint{bottom:10px;font-size:10px} }
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<header class="panel"><h1>♡ My Little Dream Room</h1><div class="sub">a tiny blush-pink world · rotate to explore</div></header>
+<div id="controls" class="panel">
+  <button id="day" class="active">☀ Day</button><button id="night">☾ Night</button>
+  <button id="front">Front view</button><button id="reset">Reset</button>
+</div>
+<div id="hint" class="panel">Drag to rotate · Scroll to zoom · Right-drag to pan</div>
+<div id="label" class="panel"></div>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#f6eee9');
+scene.fog = new THREE.Fog('#f6eee9', 16, 30);
+const camera = new THREE.PerspectiveCamera(38, innerWidth/innerHeight, .1, 100);
+camera.position.set(9,7.5,11);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+document.querySelector('#scene').appendChild(renderer.domElement);
+const controls = new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,1.5,0); controls.enableDamping=true; controls.maxPolarAngle=Math.PI*.49; controls.minDistance=7; controls.maxDistance=19;
+
+const mat=(color,roughness=.8)=>new THREE.MeshStandardMaterial({color,roughness});
+const cream=mat('#fff8ef'), wall=mat('#f8e9e3'), pink=mat('#e8c0c4'), blush=mat('#d99da8'), wood=mat('#c69b79'), paleWood=mat('#dfc2a3'), white=mat('#fffdf9'), dark=mat('#655b60'), green=mat('#8ca58b');
+const group=new THREE.Group(); scene.add(group);
+function box(name,x,y,z,sx,sy,sz,material, parent=group, cast=true){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material); m.name=name; m.position.set(x,y,z); m.castShadow=cast; m.receiveShadow=true; parent.add(m); return m;
+}
+function cyl(name,x,y,z,r1,r2,h,material,parent=group,segments=20){
+ const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,segments),material);m.name=name;m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
+}
+function sphere(name,x,y,z,sx,sy,sz,material,parent=group){
+ const m=new THREE.Mesh(new THREE.SphereGeometry(1,20,16),material);m.name=name;m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;parent.add(m);return m;
+}
+// Dollhouse platform and open-front, three-wall shell
+box('wooden platform',0,-.16,0,8.5,.32,6.4,wood);
+box('floor inset',0,.015,0,8.25,.04,6.15,paleWood);
+for(let x=-3.85;x<=3.85;x+=.65) box('floor plank seam',x,.038,0,.012,.006,6.05,wood,group,false);
+box('back wall',0,2.05,-3.08,8.25,4.05,.18,wall);
+box('left wall',-4.08,2.05,0,.18,4.05,6.15,cream);
+box('right wall',4.08,2.05,0,.18,4.05,6.15,wall);
+box('back wall blush panel',0,2.15,-2.97,4.3,2.8,.025,pink);
+box('left wall lower wainscot',-3.97,.65,0,.025,1.2,5.9,white);
+box('back skirting',0,.16,-2.94,8,.18,.09,white);
+box('left skirting',-3.94,.16,0,.09,.18,6,white);
+box('right skirting',3.94,.16,0,.09,.18,6,white);
+// Window on back wall
+box('window frame',-2.55,2.65,-2.91,1.75,1.55,.12,white);
+box('window glass',-2.55,2.65,-2.83,1.53,1.33,.025,mat('#c9dce1',.3));
+box('window vertical mullion',-2.55,2.65,-2.79,.055,1.34,.04,white);
+box('window horizontal mullion',-2.55,2.65,-2.78,1.55,.055,.04,white);
+box('window sill',-2.55,1.84,-2.78,1.95,.12,.28,paleWood);
+// Bed at back-right
+box('bed base',2.25,.48,-1.55,2.55,.55,2.65,white);
+box('bed frame',2.25,.27,-1.55,2.7,.22,2.8,wood);
+box('mattress',2.25,.83,-1.55,2.48,.25,2.55,cream);
+box('headboard',2.25,1.35,-2.83,2.65,1.1,.18,blush);
+for(let x of [1.55,2.45]) box('pillow',x,1.04,-2.25,.78,.22,.65,white);
+box('pink duvet',2.25,.99,-1.15,2.42,.22,1.45,pink);
+box('folded throw',2.25,1.13,-.65,2.44,.08,.35,blush);
+for(let x of [1.25,3.25]) sphere('decorative cushion',x,1.18,-1.3,.3,.18,.3,mat('#f4d9d8'));
+// Bedside table and lamp
+box('nightstand',.55,.55,-2.15,.72,.9,.7,paleWood);
+box('nightstand drawer',.55,.58,-1.78,.55,.28,.035,white);
+cyl('lamp base',.55,1.06,-2.15,.2,.2,.08,wood);
+cyl('lamp stem',.55,1.32,-2.15,.045,.045,.48,white);
+cyl('lamp shade',.55,1.62,-2.15,.3,.16,.42,mat('#f3dfc9'),group,24);
+// Study desk on left
+box('desk top',-2.65,1.05,.35,2.45,.16,1.15,paleWood);
+for(let x of [-3.65,-1.65]) for(let z of [-.05,.75]) box('desk leg',x,.53,z,.12,1,.12,wood);
+box('monitor',-2.7,1.85,-.05,1.18,.75,.09,dark);
+box('monitor screen',-2.7,1.86,.01,1.06,.62,.025,mat('#b9cbd0',.25));
+box('monitor stand',-2.7,1.38,-.04,.12,.28,.12,dark);
+box('keyboard',-2.65,1.17,.55,.85,.055,.3,white);
+box('desk mat',-2.65,1.145,.52,1.45,.025,.72,mat('#e9cbd0'));
+box('computer tower',-3.7,1.55,.85,.42,.85,.45,white);
+sphere('tower power light',-3.7,1.7,.615,.035,.035,.02,green);
+// Chair
+cyl('chair seat',-2.65,.72,1.45,.48,.48,.18,blush);
+box('chair back',-2.65,1.25,1.83,.88,1.05,.16,pink);
+for(let x of [-2.95,-2.35]) box('chair leg',x,.35,1.45,.07,.65,.07,wood);
+// Bookcase against right wall
+box('bookcase',3.7,1.65,.45,.55,3.15,1.65,paleWood);
+for(let y of [.55,1.35,2.15,2.85]) box('bookcase shelf',3.38,y,.45,.12,.07,1.55,white);
+const bookColors=['#d99da8','#b9c7b3','#e7c99e','#c6b6d9','#f4d8d0'];
+for(let i=0;i<5;i++){let b=box('book',3.35,.88,.0+i*.23,.16,.55+(i%2)*.12,.16,mat(bookColors[i]));b.rotation.z=(i-2)*.045;}
+for(let i=0;i<4;i++) box('lower book',3.35,1.68,-.05+i*.25,.17,.42,.18,mat(bookColors[(i+2)%5]));
+// Rug
+cyl('round rug',0,.09,1.85,1.75,1.75,.06,mat('#f3dfd7'),group,48);
+// Coffee table
+cyl('small table top',0,.55,1.75,.65,.65,.12,white,group,32);
+cyl('table pedestal',0,.32,1.75,.12,.18,.42,wood);
+// Plants
+function plant(x,z,scale=1){
+ cyl('plant pot',x,.35*scale,z,.22*scale,.28*scale,.48*scale,mat('#e7c8c0'));
+ for(let i=0;i<5;i++){let a=i*Math.PI*2/5;sphere('plant leaf',x+Math.cos(a)*.22*scale,.75*scale,z+Math.sin(a)*.18*scale,.13*scale,.38*scale,.1*scale,green).rotation.z=-Math.cos(a)*.45;}
+}
+plant(-3.55,2.35,.9); plant(3.45,-2.25,.75);
+// Wall art
+box('art frame',.1,2.65,-2.92,1.05,1.15,.1,white);
+box('art canvas',.1,2.65,-2.855,.88,.98,.025,mat('#f1d5d3'));
+sphere('art flower center',.1,2.72,-2.82,.12,.12,.025,blush);
+for(let i=0;i<6;i++){let a=i*Math.PI/3;sphere('art flower petal',.1+Math.cos(a)*.23,2.72+Math.sin(a)*.23,-2.82,.13,.19,.025,white).rotation.z=a;}
+// Chibi character, simple stylized 3D figure near rug
+const chibi=new THREE.Group(); chibi.position.set(.65,.12,1.65); group.add(chibi);
+const skin=mat('#f6d4c5'), hair=mat('#6b514d'), outfit=mat('#d99da8'), shoe=mat('#fff8ef'), eye=mat('#493b3b');
+sphere('chibi body',0,.62,0,.34,.43,.25,outfit,chibi);
+sphere('chibi head',0,1.28,0,.48,.48,.42,skin,chibi);
+sphere('chibi hair cap',0,1.53,-.035,.5,.32,.44,hair,chibi);
+sphere('hair fringe',-.19,1.38,.32,.22,.19,.13,hair,chibi);
+sphere('hair fringe',.08,1.4,.34,.24,.16,.12,hair,chibi);
+for(let x of [-.17,.17]){sphere('chibi eye',x,1.28,.386,.055,.09,.035,eye,chibi);sphere('eye shine',x-.015,1.315,.418,.018,.025,.012,white,chibi);}
+sphere('chibi blush',-.29,1.15,.34,.09,.045,.025,mat('#e9a6a8'),chibi);
+sphere('chibi blush',.29,1.15,.34,.09,.045,.025,mat('#e9a6a8'),chibi);
+for(let x of [-.19,.19]){cyl('chibi leg',x,.18,0,.075,.075,.32,skin,chibi);sphere('chibi shoe',x,.07,.08,.14,.08,.2,shoe,chibi);}
+sphere('hair bun',-.39,1.55,-.02,.18,.2,.18,hair,chibi);
+sphere('hair bow',-.48,1.72,.02,.13,.1,.07,blush,chibi);
+// Lighting
+const hemi=new THREE.HemisphereLight('#fff4e9','#9c8177',2.0);scene.add(hemi);
+const sun=new THREE.DirectionalLight('#fff1dc',3.1);sun.position.set(-5,9,7);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-10;sun.shadow.camera.right=10;sun.shadow.camera.top=10;sun.shadow.camera.bottom=-10;scene.add(sun);
+const fill=new THREE.PointLight('#f5cbd2',22,10);fill.position.set(1,4,1);scene.add(fill);
+const floorShadow=new THREE.Mesh(new THREE.PlaneGeometry(200,200),mat('#f6eee9'));floorShadow.rotation.x=-Math.PI/2;floorShadow.position.y=-.34;floorShadow.receiveShadow=true;scene.add(floorShadow);
+
+function setNight(night){
+ scene.background=new THREE.Color(night?'#262b42':'#f6eee9');scene.fog.color.copy(scene.background);
+ hemi.intensity=night?.55:2;sun.intensity=night?.35:3.1;fill.intensity=night?38:22;
+ document.querySelector('#day').classList.toggle('active',!night);
+ document.querySelector('#night').classList.toggle('active',night);
+}
+document.querySelector('#day').onclick=()=>setNight(false);
+document.querySelector('#night').onclick=()=>setNight(true);
+document.querySelector('#front').onclick=()=>{camera.position.set(0,5.2,13);controls.target.set(0,1.5,0);};
+document.querySelector('#reset').onclick=()=>{camera.position.set(9,7.5,11);controls.target.set(0,1.5,0);setNight(false);};
+const raycaster=new THREE.Raycaster(), mouse=new THREE.Vector2(), label=document.querySelector('#label');
+renderer.domElement.addEventListener('click',e=>{
+ const r=renderer.domElement.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;
+ raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects(group.children,true);
+ if(hits.length){let o=hits[0].object;let n=o.name||'A little detail';label.textContent='♡ '+n;label.style.display='block';}
+});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+function animate(){requestAnimationFrame(animate);controls.update();chibi.rotation.y=Math.sin(performance.now()*.0008)*.08;renderer.render(scene,camera);}
+animate();
+</script>
+</body>
+</html>
